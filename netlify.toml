@@ -1,6 +1,63 @@
+# Netlify Build Settings for AIDEN Deployment
 [build]
-  command = "solid-start build"
-  functions = "netlify/functions"
-  publish = "netlify"
+  command = "solid-start build"         # Build command to generate the site
+  functions = "netlify/functions"       # Directory for serverless functions (e.g., risk assessments, AI analytics)
+  publish = "netlify"                   # Directory to publish the build output
+  
+  # You can add any environment variables here or via the Netlify UI for better security
+  [build.environment]
+    NODE_ENV = "production"             # Set production environment
+    API_KEY_AIDEN = "${API_KEY_AIDEN}"  # API keys for external integrations (e.g., SAM.gov, EagleView)
+    EAGLEVIEW_API_URL = "${EAGLEVIEW_API_URL}" 
 
-  ## more info on configuring this file: https://www.netlify.com/docs/netlify-toml-reference/
+# Context-Specific Configuration
+# Production Context (for main branch deployments)
+[context.production]
+  publish = "dist/"                     # Specify the output directory for production
+  command = "make publish"              # Build command for production builds
+
+# Development Context (for local development using Netlify Dev)
+[context.dev]
+  command = "npm run dev"               # Command to start the local development server
+  port = 3000                           # Port for development server
+  publish = "public"                    # Folder where static files are located
+
+# Functions Configuration for AIDEN
+# Customize behavior for serverless functions, such as predictive analytics or fraud detection
+[functions]
+  directory = "functions/"
+  node_bundler = "esbuild"              # Use esbuild for faster and smaller function bundles
+  included_files = ["data/*.json", "scripts/*.py"]  # Include specific files for data processing
+
+# Redirect Rules for Smooth Navigation
+# You can add redirects for handling different parts of the platform (e.g., training modules)
+[[redirects]]
+  from = "/training"
+  to = "/education/training"            # Redirecting users to the proper page
+  status = 301                          # Use a 301 redirect for permanent navigation changes
+
+# Header Configuration for Security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    Content-Security-Policy = "default-src 'self'; script-src 'self'"
+
+# Plugin Configuration
+# Example: Using plugins for Lighthouse performance checks
+[[plugins]]
+  package = "@netlify/plugin-lighthouse"
+  [plugins.inputs]
+    performance = 90                    # Set the desired performance score
+    accessibility = 95                  # Set accessibility score requirements
+
+# Custom Settings for Hotkeys and Workflow Automation
+# Add custom scripts or logic for the hotkey system
+[build.scripts]
+  hotkey_config = "scripts/hotkeys.json"  # Load hotkey configurations (e.g., C + R for compliance checks)
+
+# Context for feature branches (like when developing new features for fraud detection)
+[context.feature]
+  command = "npm run feature-build"      # Special command for feature branches
+  publish = "feature-dist/"
